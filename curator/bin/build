@@ -1,0 +1,6 @@
+#!/bin/bash -ie
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+GULP_BIN="$DIR/../node_modules/.bin/gulp"
+GULP_FILE="$DIR/../gulpfile.js"
+
+$GULP_BIN --gulpfile $GULP_FILE build $@
