@@ -18,15 +18,15 @@ module.exports = function(records, cb) {
 function transform(record) {
   var data = parse(record);
   var timestamp = moment.utc(data["@timestamp"] || data.timestamp || data.time);
-  var indexKey = timestamp.format("YYYY.MM.DD");
-  var typeKey = data.tag || "kinesis";
+  var indexKey = timestamp.format("[kinesis-]YYYY.MM.DD");
+  var typeKey = record.eventSourceARN.split("/").pop();
   var index = {index: {_index: indexKey, _type: typeKey}};
   var keys = Object.keys(data);
 
   var object = {};
   keys.forEach(function(key) {
     var value = data[key];
-    setValue(object, key, value);
+    setValue(object, key.split("."), value);
   });
   object["@timestamp"] = timestamp.format();
 
@@ -47,14 +47,13 @@ function decode(data) {
 }
 
 function setValue(object, path, value) {
-  var parts = path.split(".");
-  var key = parts.shift();
+  var key = path[0];
   var val = value;
 
-  if (parts.length > 0) {
+  if (path.length > 1) {
     val = {};
-    setValue(val, parts.join("."), value);
+    setValue(val, path.slice(1), value);
   }
 
-  object[key] = value;
+  object[key] = val;
 }
