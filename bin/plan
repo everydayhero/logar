@@ -3,13 +3,13 @@
 CONFIG_ARGS=()
 PLAN_ARGS=()
 
-for i in "$@"; do
-  if [[ $i == -backend* ]]; then
-    CONFIG_ARGS+=($i)
+for arg in "$@"; do
+  if [[ $arg == -backend* ]]; then
+    CONFIG_ARGS+=($arg)
   else
-    PLAN_ARGS+=($i)
+    PLAN_ARGS+=($arg)
   fi
 done
 
-terraform remote config $CONFIG_ARGS
-terraform plan $PLAN_ARGS
+terraform remote config ${CONFIG_ARGS[@]}
+terraform plan ${PLAN_ARGS[@]}
