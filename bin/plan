@@ -1,0 +1,16 @@
+#!/bin/bash -ie
+
+CONFIG_ARGS=()
+PLAN_ARGS=()
+
+for i in "$@"; do
+  if [[ $i == -backend* ]]; then
+    CONFIG_ARGS+=($i)
+  else
+    PLAN_ARGS+=($i)
+  fi
+done
+
+terraform remote config $CONFIG_ARGS
+terraform get
+terraform plan $PLAN_ARGS
