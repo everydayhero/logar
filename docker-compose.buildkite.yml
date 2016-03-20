@@ -1,9 +1,7 @@
 ---
 version: "2"
 services:
-  terraform:
-    entrypoint: /bin/terraform
-    command: --help
+  app:
     build:
       context: .
       dockerfile: Dockerfile.buildkite
