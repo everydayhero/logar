@@ -1,0 +1,5 @@
+#!/bin/bash -ie
+
+PLAN_FILE=$1
+
+[[ -f "$PLAN_FILE" ]] && terraform apply -input=false $PLAN_FILE
