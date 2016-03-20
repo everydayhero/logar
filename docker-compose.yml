@@ -1,4 +1,0 @@
-app:
-  build: .
-  command: "npm run-script build"
-  working_dir: "/usr/src/app"

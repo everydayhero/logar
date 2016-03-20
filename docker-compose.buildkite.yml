@@ -1,0 +1,22 @@
+---
+version: "2"
+services:
+  terraform:
+    entrypoint: /bin/terraform
+    command: --help
+    build:
+      context: .
+      dockerfile: Dockerfile.buildkite
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION
+      - TF_VAR_key_name
+      - TF_VAR_subnet_ids
+      - TF_VAR_vpc_id
+      - TF_VAR_internal_elb
+      - TF_VAR_cluster_size
+      - TF_VAR_access_key
+      - TF_VAR_secret_key
+      - TF_VAR_region
+
