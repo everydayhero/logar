@@ -4,7 +4,7 @@ PLAN_FILE=$1
 
 if hash buildkite-agent 2> /dev/null; then
   echo "~~~ Downloading plan"
-  buildkite-agent artifact download $PLAN_FILE
+  buildkite-agent artifact download $PLAN_FILE .
 fi
 
 if [[ -f "$PLAN_FILE" ]]; then
