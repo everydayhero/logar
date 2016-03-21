@@ -21,5 +21,5 @@ terraform plan ${PLAN_ARGS[@]}
 
 if hash buildkite-agent 2> /dev/null; then
   echo "~~~ Uploading plan"
-  buildkite-agent artifact upload $OUT_FILE
+  buildkite-agent artifact upload $OUT_FILE $BUILDKITE_ARTIFACT_UPLOAD_DESTINATION
 fi
