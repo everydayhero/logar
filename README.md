@@ -1,4 +1,6 @@
 # Logar
+[![Build status](https://badge.buildkite.com/d186bcfefd00e2e62cb261876c6ad7af364cc127df2d0b1eff.svg)](https://buildkite.com/everyday-hero/logar)
+
 Provisions a self-managed Elasticsearch cluster in AWS for storing logs using [Terraform](https://www.terraform.io).
 
 This will create an Elasticsearch cluster that automatically curates old indices and funnel logs set to a AWS Kinesis stream or AWS CloudWatch Logs.
