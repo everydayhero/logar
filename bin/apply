@@ -2,4 +2,12 @@
 
 PLAN_FILE=$1
 
-[[ -f "$PLAN_FILE" ]] && terraform apply -input=false $PLAN_FILE
+if hash buildkite-agent 2> /dev/null; then
+  echo "~~~ Downloading plan"
+  buildkite-agent artifact download $PLAN_FILE
+fi
+
+if [[ -f "$PLAN_FILE" ]]; then
+  echo "~~~ Applying plan"
+  terraform apply -input=false $PLAN_FILE
+fi
