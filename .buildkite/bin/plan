@@ -1,0 +1,23 @@
+#!/bin/bash -ie
+
+APP_ENV=$1
+OUT_FILE="$APP_ENV.tfplan"
+STATE_KEY="logar-$APP_ENV"
+BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+RUN="$BIN/run $APP_ENV"
+
+if [ -z "$APP_ENV" ]; then
+  echo "An environment must be specified"
+  exit 1
+fi
+
+APP_ENV=$(echo $APP_ENV | tr '[:lower:]' '[:upper:]')
+
+source $BIN/getenv "${APP_ENV}_"
+env
+
+echo "~~~ Planning terraform"
+$RUN bin/plan -backend=s3 -backend-config="bucket=$STATE_BUCKET" -backend-config="key=$STATE_KEY" -input=false -out $OUT_FILE
+
+echo "~~~ Uploading plan"
+$RUN buildkite-agent artifact upload $OUT_FILE

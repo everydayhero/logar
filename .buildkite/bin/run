@@ -1,0 +1,5 @@
+#!/bin/bash -ie
+
+SUFFIX=$1
+BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+$BIN/dc run --name "$BUILDKITE_PIPELINE_SLUG$BUILDKITE_BUILD_NUMBER$SUFFIX" $@

@@ -1,0 +1,12 @@
+#!/bin/bash -ie
+
+APP_ENV=$1
+PLAN_FILE="$APP_ENV.tfplan"
+BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+RUN="$BIN/run $APP_ENV"
+
+echo "~~~ Downloading plan"
+$RUN buildkite-agent artifact download $PLAN_FILE
+
+echo "~~~ Applying plan"
+$RUN bin/apply $PLAN_FILE

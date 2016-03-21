@@ -1,0 +1,4 @@
+#!/bin/bash -ie
+
+BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+$BIN/dc build

@@ -1,0 +1,16 @@
+#!/bin/bash -ie
+
+main() {
+  local prefix=$1
+
+  for e in `env`; do
+    local key="${e%=*}"
+    local val="${e#*=}"
+
+    if [[ $key == $prefix* ]]; then
+      export ${key#$prefix}=$val
+    fi
+  done
+}
+
+main $@
