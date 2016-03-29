@@ -18,6 +18,7 @@ module.exports = function(body, callback) {
   };
 
   var request = protocol.request(requestParams, function(response) {
+      var statusCode = response.statusCode;
       var responseBody = "";
 
       response.on("data", function(chunk) {
@@ -25,28 +26,39 @@ module.exports = function(body, callback) {
       });
 
       response.on("end", function() {
-        var info = JSON.parse(responseBody);
-        var failedItems;
-        var success;
+        var failedItems, success;
+        var info = {items: []};
+        var error = null;
 
-        if (response.statusCode >= 200 && response.statusCode < 299) {
+        try {
+          if (responseBody !== "") {
+            info = JSON.parse(responseBody);
+          }
+        } catch (ex) {
+          callback("Error parsing response: " + responseBody);
+          return;
+        }
+
+        if (statusCode >= 200 && statusCode < 299) {
           failedItems = info.items.filter(function(x) {
             return x.status >= 300;
           });
 
-          success = { 
+          success = {
             "attemptedItems": info.items.length,
             "successfulItems": info.items.length - failedItems.length,
             "failedItems": failedItems.length
           };
         }
 
-        var error = response.statusCode !== 200 || info.errors === true ? {
-          "statusCode": response.statusCode,
-          "responseBody": responseBody
-        } : null;
+        if (statusCode !== 200 || info.errors === true) {
+          error = {
+            "statusCode": statusCode,
+            "responseBody": responseBody
+          };
+        }
 
-        callback(error, success, response.statusCode, failedItems);
+        callback(error, success, statusCode, failedItems);
       });
   }).on("error", function(e) {
       callback(e);
