@@ -158,6 +158,25 @@ resource "aws_lambda_function" "curator" {
   }
 }
 
+resource "aws_cloudwatch_event_rule" "curate_daily" {
+  name = "LogsCurateDaily"
+  schedule_expression = "rate(1 day)"
+}
+
+resource "aws_cloudwatch_event_target" "curator" {
+  rule = "${aws_cloudwatch_event_rule.curate_daily.name}"
+  arn = "${aws_lambda_function.curator.arn}"
+  target_id = "LogsCurator"
+}
+
+resource "aws_lambda_permission" "grant_daily_curation" {
+  statement_id = "AllowEventToInvokeLogsCurator"
+  action = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.curator.function_name}"
+  principal = "events.amazonaws.com"
+  source_arn = "${aws_cloudwatch_event_rule.curate_daily.arn}"
+}
+
 output "dns_name" {
   value = "${module.elasticsearch.dns_name}"
 }
