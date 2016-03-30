@@ -11,5 +11,3 @@ RUN apt-get update && \
 WORKDIR /usr/src/app
 COPY . /usr/src/app
 RUN /bin/terraform get
-RUN cd /usr/src/app/funnel && npm install
-RUN cd /usr/src/app/curator && npm install
