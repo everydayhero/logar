@@ -98,10 +98,21 @@ resource "null_resource" "funnel" {
   }
 }
 
+module "funnel" {
+  source = "github.com/everydayhero/npm-lambda-packer"
+
+  package = "logar-funnel"
+  version = "1.0.0"
+
+  environment = <<ENVIRONMENT
+ENDPOINT=http://${module.elasticsearch.dns_name}:9200
+ENVIRONMENT
+}
+
 resource "aws_lambda_function" "funnel" {
   function_name = "LogsFunnel"
   handler = "index.handler"
-  filename = "functions/funnel.zip"
+  filename = "${module.funnel.filepath}"
   timeout = 30
 
   role = "${aws_iam_role.function.arn}"
@@ -110,8 +121,6 @@ resource "aws_lambda_function" "funnel" {
     subnet_ids = ["${split(",", var.subnet_ids)}"]
     security_group_ids = ["${aws_security_group.function.id}"]
   }
-
-  depends_on = ["null_resource.funnel"]
 }
 
 resource "aws_lambda_event_source_mapping" "logstream" {
@@ -122,20 +131,23 @@ resource "aws_lambda_event_source_mapping" "logstream" {
   event_source_arn = "${aws_kinesis_stream.logstream.arn}"
 }
 
-resource "null_resource" "curator" {
-  triggers {
-    elasticsearch_dns_name = "${module.elasticsearch.dns_name}"
-  }
+module "curator" {
+  source = "github.com/everydayhero/npm-lambda-packer"
 
-  provisioner "local-exec" {
-    command = "./curator/bin/build --endpoint='${module.elasticsearch.dns_name}' --max_index_age=${var.index_retention} --excluded_indices='${var.excluded_indices}' --output=../functions/curator.zip"
-  }
+  package = "logar-curator"
+  version = "1.0.0"
+
+  environment = <<ENVIRONMENT
+ENDPOINT=http://${module.elasticsearch.dns_name}:9200
+MAX_INDEX_AGE=${var.index_retention}
+EXCLUDED_INDICES="${var.excluded_indices}"
+ENVIRONMENT
 }
 
 resource "aws_lambda_function" "curator" {
   function_name = "LogsCurator"
   handler = "index.handler"
-  filename = "functions/curator.zip"
+  filename = "${module.curator.filepath}"
   timeout = 30
 
   role = "${aws_iam_role.function.arn}"
@@ -144,8 +156,6 @@ resource "aws_lambda_function" "curator" {
     subnet_ids = ["${split(",", var.subnet_ids)}"]
     security_group_ids = ["${aws_security_group.function.id}"]
   }
-
-  depends_on = ["null_resource.curator"]
 }
 
 output "dns_name" {
