@@ -148,7 +148,7 @@ resource "aws_lambda_function" "curator" {
   function_name = "LogsCurator"
   handler = "index.handler"
   filename = "${module.curator.filepath}"
-  timeout = 30
+  timeout = 300
 
   role = "${aws_iam_role.function.arn}"
 
