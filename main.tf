@@ -78,6 +78,20 @@ resource "aws_security_group" "function" {
     security_groups = ["${module.elasticsearch.security_group_id}"]
   }
 
+  egress {
+    from_port = 9200
+    to_port   = 9200
+    protocol  = "tcp"
+    security_groups = ["${module.elasticsearch.security_group_id}"]
+  }
+
+  egress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   lifecycle {
     create_before_destroy = true
   }
