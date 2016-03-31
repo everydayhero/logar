@@ -147,21 +147,11 @@ resource "aws_kinesis_stream" "logstream" {
   shard_count = "${(var.cluster_size + (var.cluster_size % 2)) / 2}"
 }
 
-resource "null_resource" "funnel" {
-  triggers {
-    elasticsearch_dns_name = "${module.elasticsearch.dns_name}"
-  }
-
-  provisioner "local-exec" {
-    command = "./funnel/bin/build --endpoint='${module.elasticsearch.dns_name}' --output=../functions/funnel.zip"
-  }
-}
-
 module "funnel" {
   source = "github.com/everydayhero/npm-lambda-packer"
 
   package = "logar-funnel"
-  version = "1.0.0"
+  version = "1.1.0"
 
   environment = <<ENVIRONMENT
 ENDPOINT=http://${module.elasticsearch.dns_name}:9200
