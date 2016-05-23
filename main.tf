@@ -135,6 +135,41 @@ resource "aws_lambda_event_source_mapping" "logstream" {
   event_source_arn = "${aws_kinesis_stream.logstream.arn}"
 }
 
+module "papertrail" {
+  source = "github.com/everydayhero/npm-lambda-packer"
+
+  package = "logar-papertrail"
+  version = "1.0.0"
+
+  environment = <<ENVIRONMENT
+PAPERTRAIL_HOST=logs4.papertrailapp.com
+PAPERTRAIL_STREAM=logar-papertrail
+PAPERTRAIL_PORT=19891
+ENVIRONMENT
+}
+
+resource "aws_lambda_function" "funnel_papertrail" {
+  function_name = "LogsPapertrail"
+  handler = "index.handler"
+  filename = "${module.papertrail.filepath}"
+  timeout = 30
+
+  role = "${aws_iam_role.function.arn}"
+
+  vpc_config {
+    subnet_ids = ["${split(",", var.subnet_ids)}"]
+    security_group_ids = ["${aws_security_group.function.id}"]
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "papertrail_logstream" {
+  batch_size = 10000
+  starting_position = "TRIM_HORIZON"
+
+  function_name = "${aws_lambda_function.funnel_papertrail.arn}"
+  event_source_arn = "${aws_kinesis_stream.logstream.arn}"
+}
+
 module "curator" {
   source = "github.com/everydayhero/npm-lambda-packer"
 
