@@ -127,7 +127,7 @@ resource "aws_lambda_function" "funnel" {
   }
 }
 
-resource "aws_lambda_event_source_mapping" "logstream" {
+resource "aws_lambda_event_source_mapping" "funnel_logstream" {
   batch_size = 10000
   starting_position = "TRIM_HORIZON"
 
