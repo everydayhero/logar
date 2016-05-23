@@ -1,6 +1,6 @@
 FROM node:0.10.36
 
-ENV TERRAFORM_VERSION 0.6.12
+ENV TERRAFORM_VERSION 0.6.15
 
 RUN apt-get update && \
   apt-get install -y unzip && \
