@@ -127,7 +127,7 @@ resource "aws_lambda_function" "funnel" {
   }
 }
 
-resource "aws_lambda_event_source_mapping" "logstream" {
+resource "aws_lambda_event_source_mapping" "funnel_logstream" {
   batch_size = 10000
   starting_position = "TRIM_HORIZON"
 
@@ -148,7 +148,7 @@ PAPERTRAIL_PORT=19891
 ENVIRONMENT
 }
 
-resource "aws_lambda_function" "funnel_papertrail" {
+resource "aws_lambda_function" "papertrail" {
   function_name = "LogsPapertrail"
   handler = "index.handler"
   filename = "${module.papertrail.filepath}"
@@ -166,7 +166,7 @@ resource "aws_lambda_event_source_mapping" "papertrail_logstream" {
   batch_size = 10000
   starting_position = "TRIM_HORIZON"
 
-  function_name = "${aws_lambda_function.funnel_papertrail.arn}"
+  function_name = "${aws_lambda_function.papertrail.arn}"
   event_source_arn = "${aws_kinesis_stream.logstream.arn}"
 }
 
