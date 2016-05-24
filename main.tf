@@ -118,6 +118,7 @@ resource "aws_lambda_function" "funnel" {
   handler = "index.handler"
   filename = "${module.funnel.filepath}"
   timeout = 30
+  runtime = "nodejs4.3"
 
   role = "${aws_iam_role.function.arn}"
 
@@ -189,6 +190,7 @@ resource "aws_lambda_function" "curator" {
   handler = "index.handler"
   filename = "${module.curator.filepath}"
   timeout = 300
+  runtime = "nodejs4.3"
 
   role = "${aws_iam_role.function.arn}"
 
