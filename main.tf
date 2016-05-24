@@ -153,6 +153,7 @@ resource "aws_lambda_function" "papertrail" {
   handler = "index.handler"
   filename = "${module.papertrail.filepath}"
   timeout = 30
+  runtime = "nodejs4.3"
 
   role = "${aws_iam_role.function.arn}"
 
