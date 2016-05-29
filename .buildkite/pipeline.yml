@@ -3,26 +3,26 @@ steps:
   - name: ":docker:"
     command: ".buildkite/bin/build"
     agents:
-      - queue=native
+      - queue=elastic
 
   - wait
 
   - name: ":thinking_face: Staging"
     command: ".buildkite/bin/plan staging"
     agents:
-      - queue=native
+      - queue=elastic
 
   - name: ":thinking_face: Production"
     command: ".buildkite/bin/plan production"
     agents:
-      - queue=native
+      - queue=elastic
 
   - block
 
   - name: ":shipit: Staging"
     command: ".buildkite/bin/apply staging"
     agents:
-      - queue=native
+      - queue=elastic
     branches: master
 
   - block
@@ -30,6 +30,6 @@ steps:
   - name: ":shipit: Production"
     command: ".buildkite/bin/apply production"
     agents:
-      - queue=native
+      - queue=elastic
     branches: master
 
