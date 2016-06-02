@@ -99,7 +99,7 @@ resource "aws_security_group" "function" {
 
 resource "aws_kinesis_stream" "logstream" {
   name = "Logstream"
-  shard_count = "${(var.cluster_size + (var.cluster_size % 2)) / 2}"
+  shard_count = "${coalesce(var.shards, (var.cluster_size + (var.cluster_size % 2)) / 2)}"
 }
 
 module "funnel" {
