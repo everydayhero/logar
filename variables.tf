@@ -49,3 +49,8 @@ variable "excluded_indices" {
   default = ".kibana"
   description = "Indicies to not cull"
 }
+
+variable "shards" {
+  default = ""
+  description = "The number of shards allocated for kinesis stream. Defaults to half the cluster size."
+}
