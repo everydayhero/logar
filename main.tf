@@ -176,7 +176,7 @@ module "curator" {
   source = "github.com/everydayhero/npm-lambda-packer"
 
   package = "logar-curator"
-  version = "1.0.0"
+  version = "1.0.1"
 
   environment = <<ENVIRONMENT
 ENDPOINT=http://${module.elasticsearch.dns_name}:9200
