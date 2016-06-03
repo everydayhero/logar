@@ -1,12 +1,5 @@
 ---
 steps:
-  - name: ":docker:"
-    command: ".buildkite/bin/build"
-    agents:
-      - queue=elastic
-
-  - wait
-
   - name: ":thinking_face: Staging"
     command: ".buildkite/bin/plan staging"
     agents:
