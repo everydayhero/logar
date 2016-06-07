@@ -21,6 +21,7 @@ services:
       - TF_VAR_region
       - TF_VAR_shards
       - TF_VAR_instance_type
+      - TF_VAR_volume_size
       - BUILDKITE_AGENT_ACCESS_TOKEN
       - BUILDKITE_AGENT_DEBUG
       - BUILDKITE_AGENT_ENDPOINT
