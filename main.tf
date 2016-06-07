@@ -140,7 +140,7 @@ module "papertrail" {
   source = "github.com/everydayhero/npm-lambda-packer"
 
   package = "logar-papertrail"
-  version = "1.0.3"
+  version = "1.0.5"
 
   environment = <<ENVIRONMENT
 PAPERTRAIL_HOST=logs4.papertrailapp.com
