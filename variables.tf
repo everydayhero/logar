@@ -54,3 +54,7 @@ variable "shards" {
   default = ""
   description = "The number of shards allocated for kinesis stream. Defaults to half the cluster size."
 }
+
+variable "ssh_keys" {
+  description = "Add ssh keys to the cluster"
+}
