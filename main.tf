@@ -107,7 +107,7 @@ module "funnel" {
   source = "github.com/everydayhero/npm-lambda-packer"
 
   package = "logar-funnel"
-  version = "1.1.4"
+  version = "2.0.0"
 
   environment = <<ENVIRONMENT
 ENDPOINT=http://${module.elasticsearch.dns_name}:9200
