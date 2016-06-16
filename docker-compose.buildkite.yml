@@ -11,18 +11,6 @@ services:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_DEFAULT_REGION
-      - TF_VAR_key_name
-      - TF_VAR_subnet_ids
-      - TF_VAR_vpc_id
-      - TF_VAR_internal_elb
-      - TF_VAR_cluster_size
-      - TF_VAR_access_key
-      - TF_VAR_secret_key
-      - TF_VAR_region
-      - TF_VAR_shards
-      - TF_VAR_instance_type
-      - TF_VAR_volume_size
-      - TF_VAR_ssh_keys
       - BUILDKITE_AGENT_ACCESS_TOKEN
       - BUILDKITE_AGENT_DEBUG
       - BUILDKITE_AGENT_ENDPOINT
@@ -72,9 +60,13 @@ services:
       service: base
     environment:
       APP_ENV: staging
+    env_file:
+      - staging.env
 
   production:
     extends:
       service: base
     environment:
       APP_ENV: production
+    env_file:
+      - production.env

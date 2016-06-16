@@ -1,16 +1,9 @@
-#!/bin/bash -ie
+#!/bin/bash
+
+set -euo pipefail
 
 main() {
-  local prefix=$1
-
-  for e in `env`; do
-    local key="${e%=*}"
-    local val="${e#*=}"
-
-    if [[ $key == $prefix* ]]; then
-      export ${key#$prefix}=$val
-    fi
-  done
+  env | grep "^${1}" | sed -e "s/^${1}//"
 }
 
 main $@
