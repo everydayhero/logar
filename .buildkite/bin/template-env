@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -euo pipefail
+
+BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+template_env() {
+  local env="$1"
+  local env_prefix="$(echo $env | tr '[:lower:]' '[:upper:]')_"
+  "$BIN"/getenv "$env_prefix" > "${env}.env"
+}
+
+template_env production
+template_env staging

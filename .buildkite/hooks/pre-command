@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -euo pipefail
+
+HOOKS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+$HOOKS/../bin/template-env
