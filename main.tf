@@ -111,6 +111,7 @@ module "funnel" {
 
   environment = <<ENVIRONMENT
 ENDPOINT=http://${module.elasticsearch.dns_name}:9200
+DUMMY=value
 ENVIRONMENT
 }
 
