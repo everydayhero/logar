@@ -5,18 +5,19 @@ provider "aws" {
 }
 
 module "elasticsearch" {
-  source           = "github.com/everydayhero/terraform-elasticsearch"
-  name             = "logs"
-  access_key       = "${var.access_key}"
-  secret_key       = "${var.secret_key}"
-  region           = "${var.region}"
-  key_name         = "${var.key_name}"
-  subnet_ids       = "${var.subnet_ids}"
-  vpc_id           = "${var.vpc_id}"
-  instance_type    = "${var.instance_type}"
-  cluster_size     = "${var.cluster_size}"
-  volume_size_data = "${var.volume_size}"
-  ssh_keys         = "${var.ssh_keys}"
+  source             = "github.com/everydayhero/terraform-elasticsearch"
+  name               = "logs"
+  access_key         = "${var.access_key}"
+  secret_key         = "${var.secret_key}"
+  region             = "${var.region}"
+  key_name           = "${var.key_name}"
+  subnet_ids         = "${var.subnet_ids}"
+  vpc_id             = "${var.vpc_id}"
+  instance_type      = "${var.instance_type}"
+  cluster_size       = "${var.cluster_size}"
+  volume_size_data   = "${var.volume_size}"
+  ssh_keys           = "${var.ssh_keys}"
+  security_group_ids = "${var.security_group_ids}"
 }
 
 resource "aws_iam_role" "function" {
@@ -228,3 +229,6 @@ output "stream_name" {
   value = "${aws_kinesis_stream.logstream.name}"
 }
 
+output "ip" {
+  value = "${module.elasticsearch.ip}"
+}
