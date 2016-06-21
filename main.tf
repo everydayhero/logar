@@ -229,3 +229,6 @@ output "stream_name" {
   value = "${aws_kinesis_stream.logstream.name}"
 }
 
+output "ip" {
+  value = "${module.elasticsearch.ip}"
+}
