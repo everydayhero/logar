@@ -25,6 +25,10 @@ variable "vpc_id" {
   description = "The VPC ID"
 }
 
+variable "vpc_cidr" {
+  description = "The VPC CIDR range"
+}
+
 variable "instance_type" {
   default = "m3.medium"
   description = "The EC2 instance type to use"
