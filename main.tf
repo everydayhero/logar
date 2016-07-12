@@ -13,6 +13,7 @@ module "elasticsearch" {
   key_name           = "${var.key_name}"
   subnet_ids         = "${var.subnet_ids}"
   vpc_id             = "${var.vpc_id}"
+  vpc_cidr           = "${var.vpc_cidr}"
   instance_type      = "${var.instance_type}"
   cluster_size       = "${var.cluster_size}"
   volume_size_data   = "${var.volume_size}"
@@ -85,13 +86,6 @@ resource "aws_security_group" "function" {
     to_port   = 9200
     protocol  = "tcp"
     security_groups = ["${module.elasticsearch.security_group_id}"]
-  }
-
-  egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 
   lifecycle {
