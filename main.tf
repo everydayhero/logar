@@ -106,6 +106,7 @@ module "funnel" {
 
   environment = <<ENVIRONMENT
 ENDPOINT=http://${module.elasticsearch.dns_name}:9200
+DUMMY=value
 ENVIRONMENT
 }
 
@@ -113,6 +114,7 @@ resource "aws_lambda_function" "funnel" {
   function_name = "LogsFunnel"
   handler = "index.handler"
   filename = "${module.funnel.filepath}"
+  source_code_hash = "${base64sha256(file(module.funnel.filepath))}"
   timeout = 30
   runtime = "nodejs4.3"
 
