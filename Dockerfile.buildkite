@@ -1,6 +1,6 @@
 FROM node:4.3
 
-ENV TERRAFORM_VERSION 0.6.16
+ENV TERRAFORM_VERSION 0.7.7
 
 RUN apt-get update && \
   apt-get install -y zip unzip && \
