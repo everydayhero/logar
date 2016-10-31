@@ -15,6 +15,7 @@ module "elasticsearch" {
   vpc_id             = "${var.vpc_id}"
   vpc_cidr           = "${var.vpc_cidr}"
   instance_type      = "${var.instance_type}"
+  image_id           = "${var.image_id}"
   cluster_size       = "${var.cluster_size}"
   volume_size_data   = "${var.volume_size}"
   ssh_keys           = "${var.ssh_keys}"

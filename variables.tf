@@ -34,6 +34,11 @@ variable "instance_type" {
   description = "The EC2 instance type to use"
 }
 
+variable "image_id" {
+  default = ""
+  description = "The Debian-based AMI to use"
+}
+
 variable "volume_size" {
   default = 100
   description = "Size of the cluster"
