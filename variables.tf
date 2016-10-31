@@ -67,7 +67,3 @@ variable "shards" {
 variable "ssh_keys" {
   description = "Add ssh keys to the cluster"
 }
-
-variable "security_group_ids" {
-  description = "The security group ids"
-}

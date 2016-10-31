@@ -19,7 +19,6 @@ module "elasticsearch" {
   cluster_size       = "${var.cluster_size}"
   volume_size_data   = "${var.volume_size}"
   ssh_keys           = "${var.ssh_keys}"
-  security_group_ids = "${var.security_group_ids}"
 }
 
 resource "aws_iam_role" "function" {
