@@ -20,7 +20,7 @@ resource "aws_lambda_function" "stats" {
   role = "${aws_iam_role.stats.arn}"
 
   vpc_config {
-    subnet_ids = ["${split(",", var.subnet_ids)}"]
+    subnet_ids = ["${data.aws_subnet.selected.*.id}"]
     security_group_ids = ["${aws_security_group.stats.id}"]
   }
 

@@ -52,7 +52,7 @@ resource "aws_instance" "ls" {
   instance_type   = "${var.instance_type}"
   ami             = "${var.image_id}"
   key_name        = "${var.key_name}"
-  subnet_id       = "${element(split(",", var.subnet_ids), 0)}"
+  subnet_id       = "${var.subnet_id}"
 
   iam_instance_profile = "${aws_iam_instance_profile.ls.id}"
 

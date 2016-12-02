@@ -3,7 +3,7 @@ resource "aws_elb" "es" {
   cross_zone_load_balancing = true
 
   name = "${replace(lower(var.name), "e[^a-z0-9]+/", "-")}"
-  subnets = ["${split(",", var.subnet_ids)}"]
+  subnets = ["${data.aws_subnet.selected.*.id}"]
   internal = "${var.internal_elb}"
 
   security_groups = ["${aws_security_group.elb.id}"]
@@ -41,7 +41,7 @@ resource "aws_instance" "es" {
   instance_type   = "${var.instance_type}"
   ami             = "${var.image_id}"
   key_name        = "${var.key_name}"
-  subnet_id       = "${element(split(",", var.subnet_ids), count.index)}"
+  subnet_id       = "${element(data.aws_subnet.selected.*.id, count.index)}"
 
   iam_instance_profile = "${aws_iam_instance_profile.es.id}"
 

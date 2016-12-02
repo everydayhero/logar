@@ -2,7 +2,7 @@ resource "aws_security_group" "elb" {
   name = "${var.name}LoadBalancer"
   description = "Allows the load balancer to communicate with Elasticsearch nodes"
 
-  vpc_id = "${var.vpc_id}"
+  vpc_id = "${data.aws_vpc.selected.id}"
 
   lifecycle {
     create_before_destroy = true
@@ -15,7 +15,7 @@ resource "aws_security_group_rule" "elb_default" {
   from_port   = 9200
   to_port     = 9200
   protocol    = "tcp"
-  cidr_blocks = ["${var.vpc_cidr}"]
+  cidr_blocks = ["${data.aws_vpc.selected.cidr_block}"]
   security_group_id = "${aws_security_group.elb.id}"
 }
 
@@ -24,7 +24,7 @@ resource "aws_security_group_rule" "elb_http" {
   from_port   = 80
   to_port     = 80
   protocol    = "tcp"
-  cidr_blocks = ["${var.vpc_cidr}"]
+  cidr_blocks = ["${data.aws_vpc.selected.cidr_block}"]
   security_group_id = "${aws_security_group.elb.id}"
 }
 

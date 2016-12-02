@@ -19,14 +19,11 @@ variable "key_name" {
 
 variable "subnet_ids" {
   description = "The subnet ID to use for the instances"
+  type = "list"
 }
 
 variable "vpc_id" {
   description = "The VPC ID"
-}
-
-variable "vpc_cidr" {
-  description = "The VPC CIDR range"
 }
 
 variable "image_id" {

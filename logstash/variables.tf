@@ -17,7 +17,7 @@ variable "key_name" {
   description = "The key name for the instances"
 }
 
-variable "subnet_ids" {
+variable "subnet_id" {
   description = "The subnet ID to use for the instances"
 }
 
