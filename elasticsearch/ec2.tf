@@ -54,13 +54,6 @@ resource "aws_instance" "es" {
     delete_on_termination = true
   }
 
-  ebs_block_device {
-    device_name           = "/dev/sdf"
-    volume_type           = "gp2"
-    volume_size           = "${var.volume_size_data}"
-    delete_on_termination = false
-  }
-
   ephemeral_block_device {
     device_name  = "/dev/sdb"
     virtual_name = "ephemeral0"
@@ -74,6 +67,25 @@ resource "aws_instance" "es" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+resource "aws_ebs_volume" "data" {
+  count = "${var.cluster_size}"
+  availability_zone = "${element(data.aws_subnet.selected.*.availability_zone, count.index)}"
+  type = "gp2"
+  size = "${var.volume_size_data}"
+
+  tags {
+    Name = "${var.name}Data"
+  }
+}
+
+resource "aws_volume_attachment" "data" {
+  count = "${var.cluster_size}"
+  instance_id = "${element(aws_instance.es.*.id, count.index)}"
+  volume_id = "${element(aws_ebs_volume.data.*.id, count.index)}"
+  device_name = "/dev/sdf"
+  skip_destroy = true
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_low_storage" {
