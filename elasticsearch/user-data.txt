@@ -1,0 +1,69 @@
+#!/bin/bash -e
+NODE_NAME=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+if [ -z "$NODE_NAME" ]; then
+  NODE_NAME=$(hostname)
+fi
+
+AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/[a-z]$//')
+HEAP_SIZE=$(free -h | awk '{ if ($1 == "Mem:") { printf "%.0f%s", $2 / 2, tolower(gensub(/[0-9\.]+/, "", "g", $2)) } }')
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Swap
+sudo umount /dev/xvdb || true
+sudo mkswap /dev/xvdb
+sudo swapon /dev/xvdb
+grep -q '^/dev/xvdb' /etc/fstab && sed -i 's/^\/dev\/xvdb.*/\/dev\/xvdb none swap sw 0 0/' /etc/fstab || echo '/dev/xvdb none swap sw 0 0' >> /etc/fstab
+
+sudo mkdir /srv/elasticsearch
+
+# EBS to ext4
+if sudo file -s /dev/xvdf | grep '/dev/xvdf: data' > /dev/null; then
+  sudo mkfs -t ext4 /dev/xvdf
+fi
+
+sudo mount /dev/xvdf /srv/elasticsearch
+if grep -q '^/dev/xvdf' /etc/fstab; then
+  sudo sed -i 's/^\/dev\/xvdf.*/\/dev\/xvdf \/srv\/elasticsearch ext4 defaults,nofail 0 2/' /etc/fstab
+else
+  echo '/dev/xvdf /srv/elasticsearch ext4 defaults,nofail 0 2' | sudo tee --append /etc/fstab > /dev/null
+fi
+
+curl -s https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/${replace(version, "/\\.\\d+$/", ".x")}/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch.list
+
+sudo add-apt-repository ppa:webupd8team/java
+echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
+
+# Wait for apt to be ready
+while ps -ef 2> /dev/null | grep -e apt -e dpkg | grep -v grep ; do echo waiting && sleep 1; done;
+
+sudo apt-get update
+sudo apt-get install -y oracle-java8-installer oracle-java8-set-default elasticsearch
+sudo mkdir -p /srv/elasticsearch/log /srv/elasticsearch/data
+sudo chown -R elasticsearch:elasticsearch /srv/elasticsearch/log /srv/elasticsearch/data
+
+cat <<EOF | sudo tee /etc/elasticsearch/elasticsearch.yml
+node.name: "$NODE_NAME"
+cluster.name: "${cluster_name}"
+network.host: [_ec2_, _local_]
+bootstrap.memory_lock: true
+path:
+  logs: /srv/elasticsearch/log
+  data: /srv/elasticsearch/data
+discovery:
+  type: ec2
+  zen.minimum_master_nodes: ${minimum_master_nodes}
+  ec2.groups: "${security_groups}"
+cloud.aws.region: "$AWS_REGION"
+EOF
+
+# Must be changed when bootstrap.mlockall: true
+sed -ie "s%^#LimitMEMLOCK=infinity$%LimitMEMLOCK=infinity%" /usr/lib/systemd/system/elasticsearch.service
+sed -ie "s%^#MAX_LOCKED_MEMORY=unlimited$%MAX_LOCKED_MEMORY=unlimited%" /etc/default/elasticsearch
+sed -ie "s%^#ES_JAVA_OPTS=%ES_JAVA_OPTS=\"-Xms$HEAP_SIZE -Xmx$HEAP_SIZE\"%" /etc/default/elasticsearch
+sudo systemctl daemon-reload
+
+sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install -b discovery-ec2
+
+sudo service elasticsearch restart

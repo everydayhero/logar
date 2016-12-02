@@ -3,12 +3,12 @@
 
 Provisions a self-managed Elasticsearch cluster in AWS for storing logs using [Terraform](https://www.terraform.io).
 
-This will create an Elasticsearch cluster that automatically curates old indices and funnel logs set to a AWS Kinesis stream or AWS CloudWatch Logs.
+This will create an Elasticsearch cluster that automatically curates old indices and funnel logs set to a AWS Kinesis stream.
 
 ## Prerequisites
 
 * [Terraform](https://www.terraform.io) v0.6.12
-* [Node](https://www.nodejs.org) v0.10.36+
+* [Node](https://www.nodejs.org) v4.3+
 
 ## Usage
 
@@ -20,7 +20,7 @@ terraform apply terraform.tfplan
 
 ## Options
 
-`keyname`  
+`key_name`  
 Required. The key to use for provisioning EC2 instances. Without this you will NOT be able to SSH onto the cluster.
 
 `subnet_ids`  
@@ -43,6 +43,13 @@ Defaults to 14 days. How many days to keep each Elasticsearch index.
 
 `excluded_indices`  
 Defaults to .kibana. Which Elasticsearch indices to not remove.
+
+`shards`  
+Defaults to cluster_size. How many shards for the Kinesis stream.
+
+## Recent changes
+
+Introduced a Logstash instance to funnel from AWS Kinesis to the Elasticsearch cluster. This is in part because Logstash does additional maintenance to ensure it is running reliably.
 
 ## Todo
 

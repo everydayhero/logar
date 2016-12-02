@@ -4,226 +4,81 @@ provider "aws" {
   region     = "${var.region}"
 }
 
+data "aws_ami" "es" {
+  most_recent = true
+  executable_users = ["all", "self"]
+
+  filter {
+    name = "name"
+    values = ["*/hvm-ssd/ubuntu-xenial-16.04-amd64-server*"]
+  }
+
+  filter {
+    name = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name = "hypervisor"
+    values = ["xen"]
+  }
+
+  filter {
+    name = "state"
+    values = ["available"]
+  }
+
+  filter {
+    name = "root-device-type"
+    values = ["ebs"]
+  }
+}
+
 module "elasticsearch" {
-  source             = "github.com/everydayhero/terraform-elasticsearch"
-  name               = "logs"
+  source             = "./elasticsearch"
+  name               = "${var.name}Elasticsearch"
   access_key         = "${var.access_key}"
   secret_key         = "${var.secret_key}"
   region             = "${var.region}"
   key_name           = "${var.key_name}"
   subnet_ids         = "${var.subnet_ids}"
   vpc_id             = "${var.vpc_id}"
-  vpc_cidr           = "${var.vpc_cidr}"
-  instance_type      = "${var.instance_type}"
-  image_id           = "${var.image_id}"
+  instance_type      = "${coalesce(var.es_instance_type, var.instance_type)}"
+  image_id           = "${coalesce(var.image_id, data.aws_ami.es.id)}"
   cluster_size       = "${var.cluster_size}"
   volume_size_data   = "${var.volume_size}"
-  ssh_keys           = "${var.ssh_keys}"
-  replicas           = "1"
+  version            = "${var.version}"
 }
 
-resource "aws_iam_role" "function" {
-  name = "LogsFunction"
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-POLICY
-}
-
-resource "aws_iam_role_policy" "function" {
-  name = "LogsFunctionExecution"
-  role = "${aws_iam_role.function.id}"
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "ec2:CreateNetworkInterface",
-        "ec2:DescribeNetworkInterfaces",
-        "ec2:DeleteNetworkInterface",
-        "kinesis:GetRecords",
-        "kinesis:GetShardIterator",
-        "kinesis:DescribeStream",
-        "kinesis:ListStreams"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-POLICY
+module "logstash" {
+  source             = "./logstash"
+  name               = "${var.name}Logstash"
+  access_key         = "${var.access_key}"
+  secret_key         = "${var.secret_key}"
+  region             = "${var.region}"
+  key_name           = "${var.key_name}"
+  subnet_ids         = "${var.subnet_ids}"
+  vpc_id             = "${var.vpc_id}"
+  instance_type      = "${coalesce(var.ls_instance_type, var.instance_type)}"
+  image_id           = "${coalesce(var.image_id, data.aws_ami.es.id)}"
+  version            = "${var.version}"
+  logstream_name     = "${module.logstream.name}"
+  cluster_name       = "${module.elasticsearch.cluster_name}"
+  minimum_master_nodes = "${module.elasticsearch.minimum_master_nodes}"
+  elasticsearch_security_group_id = "${module.elasticsearch.node_security_group_id}"
 }
 
-resource "aws_security_group" "function" {
-  name = "LogsFunction"
-  description = "Allows function access to elasticsearch"
-
-  vpc_id = "${var.vpc_id}"
-
-  egress {
-    from_port = 80
-    to_port   = 80
-    protocol  = "tcp"
-    security_groups = ["${module.elasticsearch.security_group_id}"]
-  }
-
-  egress {
-    from_port = 9200
-    to_port   = 9200
-    protocol  = "tcp"
-    security_groups = ["${module.elasticsearch.security_group_id}"]
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
+module "logstream" {
+  source             = "./logstream"
+  name               = "${var.name}Logstream"
+  access_key         = "${var.access_key}"
+  secret_key         = "${var.secret_key}"
+  region             = "${var.region}"
+  shards             = "${coalesce(var.shards, (var.cluster_size + (var.cluster_size % 2)) / 2)}"
 }
 
-resource "aws_kinesis_stream" "logstream" {
-  name = "Logstream"
-  shard_count = "${coalesce(var.shards, (var.cluster_size + (var.cluster_size % 2)) / 2)}"
-}
-
-module "funnel" {
-  source = "github.com/everydayhero/npm-lambda-packer"
-
-  package = "logar-funnel"
-  version = "2.0.0"
-
-  environment = <<ENVIRONMENT
-ENDPOINT=http://${module.elasticsearch.dns_name}:9200
-ENVIRONMENT
-}
-
-resource "aws_lambda_function" "funnel" {
-  function_name = "LogsFunnel"
-  handler = "index.handler"
-  filename = "${module.funnel.filepath}"
-  timeout = 30
-  runtime = "nodejs4.3"
-
-  role = "${aws_iam_role.function.arn}"
-
-  vpc_config {
-    subnet_ids = ["${split(",", var.subnet_ids)}"]
-    security_group_ids = ["${aws_security_group.function.id}"]
-  }
-}
-
-resource "aws_lambda_event_source_mapping" "funnel_logstream" {
-  batch_size = 10000
-  starting_position = "TRIM_HORIZON"
-
-  function_name = "${aws_lambda_function.funnel.arn}"
-  event_source_arn = "${aws_kinesis_stream.logstream.arn}"
-}
-
-module "papertrail" {
-  source = "github.com/everydayhero/npm-lambda-packer"
-
-  package = "logar-papertrail"
-  version = "1.0.5"
-
-  environment = <<ENVIRONMENT
-PAPERTRAIL_HOST=logs4.papertrailapp.com
-PAPERTRAIL_STREAM=logar-papertrail
-PAPERTRAIL_PORT=19891
-ENVIRONMENT
-}
-
-resource "aws_lambda_function" "papertrail" {
-  function_name = "LogsPapertrail"
-  handler = "index.handler"
-  filename = "${module.papertrail.filepath}"
-  timeout = 30
-  runtime = "nodejs4.3"
-
-  role = "${aws_iam_role.function.arn}"
-
-  vpc_config {
-    subnet_ids = ["${split(",", var.subnet_ids)}"]
-    security_group_ids = ["${aws_security_group.function.id}"]
-  }
-}
-
-resource "aws_lambda_event_source_mapping" "papertrail_logstream" {
-  batch_size = 10000
-  starting_position = "TRIM_HORIZON"
-
-  function_name = "${aws_lambda_function.papertrail.arn}"
-  event_source_arn = "${aws_kinesis_stream.logstream.arn}"
-}
-
-module "curator" {
-  source = "github.com/everydayhero/npm-lambda-packer"
-
-  package = "logar-curator"
-  version = "1.0.1"
-
-  environment = <<ENVIRONMENT
-ENDPOINT=http://${module.elasticsearch.dns_name}:9200
-MAX_INDEX_AGE=${var.index_retention}
-EXCLUDED_INDICES="${var.excluded_indices}"
-ENVIRONMENT
-}
-
-resource "aws_lambda_function" "curator" {
-  function_name = "LogsCurator"
-  handler = "index.handler"
-  filename = "${module.curator.filepath}"
-  timeout = 300
-  runtime = "nodejs4.3"
-
-  role = "${aws_iam_role.function.arn}"
-
-  vpc_config {
-    subnet_ids = ["${split(",", var.subnet_ids)}"]
-    security_group_ids = ["${aws_security_group.function.id}"]
-  }
-}
-
-resource "aws_cloudwatch_event_rule" "curate_daily" {
-  name = "LogsCurateDaily"
-  schedule_expression = "rate(1 day)"
-}
-
-resource "aws_cloudwatch_event_target" "curator" {
-  rule = "${aws_cloudwatch_event_rule.curate_daily.name}"
-  arn = "${aws_lambda_function.curator.arn}"
-  target_id = "LogsCurator"
-}
-
-resource "aws_lambda_permission" "grant_daily_curation" {
-  statement_id = "AllowEventToInvokeLogsCurator"
-  action = "lambda:InvokeFunction"
-  function_name = "${aws_lambda_function.curator.function_name}"
-  principal = "events.amazonaws.com"
-  source_arn = "${aws_cloudwatch_event_rule.curate_daily.arn}"
-}
-
-output "dns_name" {
-  value = "${module.elasticsearch.dns_name}"
-}
-
-output "stream_name" {
-  value = "${aws_kinesis_stream.logstream.name}"
-}
-
-output "ip" {
-  value = "${module.elasticsearch.ip}"
-}

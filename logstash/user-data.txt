@@ -1,0 +1,93 @@
+#!/bin/bash -e
+NODE_NAME=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+if [ -z "$NODE_NAME" ]; then
+  NODE_NAME=$(hostname)
+fi
+
+AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/[a-z]$//')
+HEAP_SIZE=$(free -h | awk '{ if ($1 == "Mem:") { printf "%.0f%s", $2 / 2, tolower(gensub(/[0-9\.]+/, "", "g", $2)) } }')
+
+export DEBIAN_FRONTEND=noninteractive
+
+curl -s https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/${replace(version, "/\\.\\d+$/", ".x")}/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch.list
+
+sudo add-apt-repository ppa:webupd8team/java
+echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
+
+# Wait for apt to be ready
+while ps -ef 2> /dev/null | grep -e apt -e dpkg | grep -v grep ; do echo waiting && sleep 1; done;
+
+sudo apt-get update
+sudo apt-get install -y oracle-java8-installer oracle-java8-set-default elasticsearch logstash
+
+cat <<EOF | sudo tee /etc/elasticsearch/elasticsearch.yml
+node.name: "$NODE_NAME"
+cluster.name: "${cluster_name}"
+network.host: [_ec2_, _local_]
+bootstrap.memory_lock: true
+node:
+  master: false
+  data: false
+  ingest: false
+discovery:
+  type: ec2
+  zen.minimum_master_nodes: ${minimum_master_nodes}
+  ec2.groups: "${security_groups}"
+cloud.aws.region: "$AWS_REGION"
+EOF
+
+# Must be changed when bootstrap.mlockall: true
+sed -ie "s%^#LimitMEMLOCK=infinity$%LimitMEMLOCK=infinity%" /usr/lib/systemd/system/elasticsearch.service
+sed -ie "s%^#MAX_LOCKED_MEMORY=unlimited$%MAX_LOCKED_MEMORY=unlimited%" /etc/default/elasticsearch
+sed -ie "s%^#ES_JAVA_OPTS=%ES_JAVA_OPTS=\"-Xms$HEAP_SIZE -Xmx$HEAP_SIZE\"%" /etc/default/elasticsearch
+
+# Install EC2 discovery plugin
+sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install -b discovery-ec2
+
+# Install AWS Kinesis input plugin
+sudo /usr/share/logstash/bin/logstash-plugin install logstash-input-kinesis
+
+cat <<EOF | sudo tee /etc/logstash/conf.d/kinesis-input.conf
+input {
+  kinesis {
+    kinesis_stream_name => "${logstream_name}"
+    application_name => "${application_name}"
+    region => "$AWS_REGION"
+    codec => "json"
+    tags => ["kinesis", "${application_name}", "%{stream}"]
+  }
+}
+EOF
+
+cat <<EOF | sudo tee /etc/logstash/conf.d/filter-json.conf
+filter {
+  if [log] =~ /^\{/ {
+    json {
+      source => "log"
+      target => "data"
+      remove_field => ["log"]
+    }
+  }
+}
+EOF
+
+cat <<EOF | sudo tee /etc/logstash/conf.d/elasticsearch-output.conf
+output {
+  if [docker][labels][app.env] and [docker][labels][app.name] {
+    elasticsearch {
+      hosts => ["localhost:9200"]
+      index => "plain-logs.%{[docker][labels][app.env]}.%{[docker][labels][app.name]}.%{+YYYY.MM.dd}"
+    }
+  } else {
+    elasticsearch {
+      hosts => ["localhost:9200"]
+      index => "plain-logs.unknown.unknown.%{+YYYY.MM.dd}"
+    }
+  }
+}
+EOF
+
+sudo systemctl daemon-reload
+sudo service elasticsearch restart
+sudo service logstash restart
