@@ -88,18 +88,6 @@ resource "aws_volume_attachment" "data" {
   skip_destroy = true
 }
 
-resource "aws_cloudwatch_metric_alarm" "es_low_storage" {
-  alarm_name = "${var.name}LowStorage"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods = 2
-  metric_name = "FreeStorage"
-  namespace = "${var.name}"
-  period = 900
-  statistic = "Average"
-  alarm_description = "Increase the elasticsearch cluster when there is less than ${var.scaling_free_storage_threshold}% free storage capacity"
-  threshold = "${(var.volume_size_data * 1000000000.0) * (var.scaling_free_storage_threshold / 100.0)}"
-}
-
 data "template_file" "es" {
   template = "${file("${path.module}/user-data.txt")}"
 
