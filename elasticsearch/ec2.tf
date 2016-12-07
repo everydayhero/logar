@@ -84,7 +84,10 @@ resource "aws_volume_attachment" "data" {
   count = "${var.cluster_size}"
   instance_id = "${element(aws_instance.es.*.id, count.index)}"
   volume_id = "${element(aws_ebs_volume.data.*.id, count.index)}"
+
   device_name = "/dev/sdf"
+
+  force_detach = true
   skip_destroy = true
 }
 
