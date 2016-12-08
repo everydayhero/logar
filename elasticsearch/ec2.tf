@@ -7,7 +7,6 @@ resource "aws_elb" "es" {
   internal = "${var.internal_elb}"
 
   security_groups = ["${aws_security_group.elb.id}"]
-  instances = ["${aws_instance.es.*.id}"]
 
   listener {
     instance_port     = 9200
@@ -67,6 +66,12 @@ resource "aws_instance" "es" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+resource "aws_elb_attachment" "es" {
+  count    = "${var.cluster_size}"
+  elb      = "${aws_elb.es.id}"
+  instance = "${element(aws_instance.es.*.id, count.index)}"
 }
 
 resource "aws_ebs_volume" "data" {
