@@ -62,10 +62,6 @@ resource "aws_instance" "es" {
     Role = "${var.name}"
     Name = "${var.name}-${count.index}"
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_elb_attachment" "es" {
@@ -92,7 +88,6 @@ resource "aws_volume_attachment" "data" {
 
   device_name = "/dev/sdf"
 
-  force_detach = true
   skip_destroy = true
 }
 
