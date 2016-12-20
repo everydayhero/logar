@@ -2,4 +2,4 @@
 
 SUFFIX=$1
 BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-$BIN/dc run --rm -T --name "$BUILDKITE_PIPELINE_SLUG$BUILDKITE_BUILD_NUMBER$SUFFIX" $@
+$BIN/dc run --rm --name "$BUILDKITE_PIPELINE_SLUG$BUILDKITE_BUILD_NUMBER$SUFFIX" $@

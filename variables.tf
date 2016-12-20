@@ -1,3 +1,8 @@
+variable "name" {
+  default = "logs"
+  description = "The name of the logging cluster"
+}
+
 variable "access_key" {
   default = ""
   description = "The AWS access key"
@@ -34,6 +39,16 @@ variable "instance_type" {
   description = "The EC2 instance type to use"
 }
 
+variable "es_instance_type" {
+  default = ""
+  description = "The elasticsearch instance type to use"
+}
+
+variable "ls_instance_type" {
+  default = ""
+  description = "The logstash instance type to use"
+}
+
 variable "image_id" {
   default = ""
   description = "The Debian-based AMI to use"
@@ -64,6 +79,7 @@ variable "shards" {
   description = "The number of shards allocated for kinesis stream. Defaults to half the cluster size."
 }
 
-variable "ssh_keys" {
-  description = "Add ssh keys to the cluster"
+variable "version" {
+  default = "5.0"
+  description = "The version to use for elasticsearch and logstash."
 }
